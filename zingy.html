@@ -23,6 +23,35 @@
     th, td { padding: 8px 12px; border: 1px solid #ccc; text-align: left; }
     th { background: #eee; }
   </style>
+
+  <style>
+    /* Mobile Responsive Tabs */
+@media (max-width: 768px) {
+  .tabs {
+    flex-direction: column;
+  }
+  .tab {
+    margin-bottom: 5px;
+    width: 100%;
+    text-align: center;
+  }
+
+  /* Make tables scrollable */
+  .tab-content table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  .tab-content table th,
+  .tab-content table td {
+    padding: 8px;
+  }
+}
+
+  </style>
+
+    
 </head>
 <body>
 
