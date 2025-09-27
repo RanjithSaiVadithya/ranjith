@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Schema Explorer & Flowcharts</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://unpkg.com/dagre-d3@0.6.4/dist/dagre-d3.min.js"></script>
+  <style>
+    body { background: #f7f5f2; font-family: 'Inter', sans-serif; }
+    .node rect {
+      fill: #edeae5;
+      stroke: #8e5a39;
+      stroke-width: 2px;
+      rx: 8px; ry: 8px;
+    }
+    .edgePath path {
+      stroke: #a56a43;
+      stroke-width: 2px;
+      fill: none;
+      marker-end: url(#arrowhead);
+    }
+    .graph-container {
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      padding: 1rem;
+      background: #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      margin-top: 2rem;
+    }
+  </style>
+</head>
+<body class="p-10">
+
+  <h1 class="text-4xl font-bold text-center text-gray-800 mb-6">📊 Schema Explorer with Flow Visualizations</h1>
+  <p class="text-center text-gray-600 mb-10 max-w-3xl mx-auto">
+    This explorer shows a modular database schema (Users, Skills, Communities, Blogs).  
+    Each section includes a visual flowchart of table relationships using <strong>Dagre-D3.js</strong>.  
+    Built with 10+ years experience designing scalable relational models.
+  </p>
+
+  <!-- USERS & SKILLS -->
+  <div class="graph-container">
+    <h2 class="text-2xl font-semibold text-gray-700 mb-4">Users & Skills Module</h2>
+    <svg id="graph-users" width="100%" height="400"></svg>
+  </div>
+
+  <!-- COMMUNITIES -->
+  <div class="graph-container">
+    <h2 class="text-2xl font-semibold text-gray-700 mb-4">Community Module</h2>
+    <svg id="graph-community" width="100%" height="450"></svg>
+  </div>
+
+  <!-- BLOG -->
+  <div class="graph-container">
+    <h2 class="text-2xl font-semibold text-gray-700 mb-4">Blog Module</h2>
+    <svg id="graph-blog" width="100%" height="300"></svg>
+  </div>
+
+  <!-- MASTER -->
+  <div class="graph-container">
+    <h2 class="text-2xl font-semibold text-gray-700 mb-4">Master Schema (All Modules)</h2>
+    <svg id="graph-master" width="100%" height="600"></svg>
+  </div>
+
+<script>
+function renderGraph(containerId, nodes, edges) {
+  const g = new dagreD3.graphlib.Graph().setGraph({});
+  nodes.forEach(n => g.setNode(n.id, { label: n.label, class: "node" }));
+  edges.forEach(e => g.setEdge(e.from, e.to, { arrowhead: "vee" }));
+
+  const svg = d3.select(`#${containerId}`);
+  const inner = svg.append("g");
+
+  // marker for arrows
+  svg.append("defs").append("marker")
+    .attr("id", "arrowhead")
+    .attr("viewBox", "0 0 10 10")
+    .attr("refX", 8)
+    .attr("refY", 5)
+    .attr("markerWidth", 6)
+    .attr("markerHeight", 6)
+    .attr("orient", "auto")
+    .append("path")
+    .attr("d", "M 0 0 L 10 5 L 0 10 z")
+    .style("fill", "#a56a43");
+
+  const render = new dagreD3.render();
+  render(inner, g);
+
+  const { width: gWidth, height: gHeight } = g.graph();
+  svg.attr("viewBox", `0 0 ${gWidth+40} ${gHeight+40}`);
+  inner.attr("transform", "translate(20,20)");
+}
+
+/* Users & Skills */
+renderGraph("graph-users",
+  [
+    {id:"users", label:"Users"},
+    {id:"skills", label:"Skills"},
+    {id:"known", label:"User_Known_Skills"},
+    {id:"learning", label:"User_Learning_Skills"},
+    {id:"connections", label:"Connections"}
+  ],
+  [
+    {from:"users", to:"known"},
+    {from:"known", to:"skills"},
+    {from:"users", to:"learning"},
+    {from:"learning", to:"skills"},
+    {from:"users", to:"connections"},
+    {from:"connections", to:"users"}
+  ]
+);
+
+/* Community */
+renderGraph("graph-community",
+  [
+    {id:"users", label:"Users"},
+    {id:"communities", label:"Communities"},
+    {id:"members", label:"Community_Members"},
+    {id:"categories", label:"Community_Categories"},
+    {id:"channels", label:"Channels"},
+    {id:"messages", label:"Messages"},
+    {id:"calls", label:"Calls"}
+  ],
+  [
+    {from:"users", to:"communities"},
+    {from:"communities", to:"members"},
+    {from:"members", to:"users"},
+    {from:"communities", to:"categories"},
+    {from:"categories", to:"channels"},
+    {from:"channels", to:"messages"},
+    {from:"channels", to:"calls"},
+    {from:"users", to:"messages"}
+  ]
+);
+
+/* Blog */
+renderGraph("graph-blog",
+  [
+    {id:"users", label:"Users"},
+    {id:"posts", label:"Blog_Posts"},
+    {id:"comments", label:"Blog_Comments"}
+  ],
+  [
+    {from:"users", to:"posts"},
+    {from:"posts", to:"comments"},
+    {from:"comments", to:"users"}
+  ]
+);
+
+/* Master Schema */
+renderGraph("graph-master",
+  [
+    {id:"users", label:"Users"},
+    {id:"skills", label:"Skills"},
+    {id:"known", label:"User_Known_Skills"},
+    {id:"learning", label:"User_Learning_Skills"},
+    {id:"connections", label:"Connections"},
+    {id:"communities", label:"Communities"},
+    {id:"members", label:"Community_Members"},
+    {id:"categories", label:"Community_Categories"},
+    {id:"channels", label:"Channels"},
+    {id:"messages", label:"Messages"},
+    {id:"calls", label:"Calls"},
+    {id:"posts", label:"Blog_Posts"},
+    {id:"comments", label:"Blog_Comments"}
+  ],
+  [
+    {from:"users", to:"known"},
+    {from:"known", to:"skills"},
+    {from:"users", to:"learning"},
+    {from:"learning", to:"skills"},
+    {from:"users", to:"connections"},
+    {from:"connections", to:"users"},
+    {from:"users", to:"communities"},
+    {from:"communities", to:"members"},
+    {from:"members", to:"users"},
+    {from:"communities", to:"categories"},
+    {from:"categories", to:"channels"},
+    {from:"channels", to:"messages"},
+    {from:"channels", to:"calls"},
+    {from:"users", to:"messages"},
+    {from:"users", to:"posts"},
+    {from:"posts", to:"comments"},
+    {from:"comments", to:"users"}
+  ]
+);
+</script>
+</body>
+</html>

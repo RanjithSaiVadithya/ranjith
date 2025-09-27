@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Full Schema Documentation & Flowcharts</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://unpkg.com/dagre-d3@0.6.4/dist/dagre-d3.min.js"></script>
+  <style>
+    body { background: #f9f9f9; font-family: 'Inter', sans-serif; line-height:1.6;}
+    .node rect { fill: #fffdf9; stroke: #8e5a39; stroke-width: 2px; rx: 8px; ry: 8px; }
+    .edgePath path { stroke: #a56a43; stroke-width: 2px; fill: none; marker-end: url(#arrowhead);}
+    .graph-container { border: 1px solid #ddd; border-radius: 12px; padding: 1rem; background: #fff; margin:2rem 0;}
+    h2{margin-top:1rem;}
+    pre{background:#f4f0eb;padding:1rem;border-radius:8px;overflow:auto;}
+  </style>
+</head>
+<body class="p-10">
+
+  <h1 class="text-4xl font-bold text-center text-gray-800 mb-8">📊 Complete Schema Documentation & Flow Visualizations</h1>
+  <p class="text-center text-gray-600 mb-12 max-w-4xl mx-auto">
+    This document combines <strong>full schema details</strong>, <strong>flowchart visualizations</strong>, and <strong>product mappings</strong>.  
+    Designed like an experienced architect would: modular, scalable, and future-proof for new features.
+  </p>
+
+  <!-- LAYER 1: SCHEMA DOCUMENTATION -->
+  <section>
+    <h2 class="text-2xl font-bold text-gray-700 mb-4">🧱 Layer 1 — Schema Documentation</h2>
+
+    <h3 class="text-xl font-semibold text-gray-800 mt-6">Users & Skills</h3>
+    <pre>
+users
+  - id (PK)
+  - name, email (unique), password (hashed), profile_pic, bio
+  - created_at, updated_at
+
+skills
+  - id (PK)
+  - name, category, description
+
+user_known_skills
+  - id (PK)
+  - user_id (FK → users.id)
+  - skill_id (FK → skills.id)
+  - level (enum: beginner, intermediate, expert)
+
+user_learning_skills
+  - id (PK)
+  - user_id (FK → users.id)
+  - skill_id (FK → skills.id)
+  - progress (0-100%)
+
+connections
+  - id (PK)
+  - user_id (FK → users.id)
+  - connected_user_id (FK → users.id)
+  - status (pending, accepted, blocked)
+    </pre>
+
+    <h3 class="text-xl font-semibold text-gray-800 mt-6">Community</h3>
+    <pre>
+communities
+  - id (PK)
+  - name, description
+  - created_by (FK → users.id)
+
+community_members
+  - id (PK)
+  - community_id (FK → communities.id)
+  - user_id (FK → users.id)
+  - role (member, mod, admin)
+
+community_categories
+  - id (PK)
+  - community_id (FK → communities.id)
+  - name
+
+channels
+  - id (PK)
+  - category_id (FK → community_categories.id)
+  - name, type (chat, voice)
+
+messages
+  - id (PK)
+  - channel_id (FK → channels.id)
+  - user_id (FK → users.id)
+  - content, timestamp
+
+calls
+  - id (PK)
+  - channel_id (FK → channels.id)
+  - started_at, ended_at
+    </pre>
+
+    <h3 class="text-xl font-semibold text-gray-800 mt-6">Blogs</h3>
+    <pre>
+blog_posts
+  - id (PK)
+  - user_id (FK → users.id)
+  - title, content
+  - created_at
+
+blog_comments
+  - id (PK)
+  - post_id (FK → blog_posts.id)
+  - user_id (FK → users.id)
+  - comment, created_at
+    </pre>
+  </section>
+
+  <!-- LAYER 2: FLOWCHARTS -->
+  <section>
+    <h2 class="text-2xl font-bold text-gray-700 mb-4">🧩 Layer 2 — Flowcharts (ERD-Style)</h2>
+    <div class="graph-container">
+      <h3 class="text-lg font-semibold mb-2">Users & Skills Module</h3>
+      <svg id="graph-users" width="100%" height="400"></svg>
+    </div>
+
+    <div class="graph-container">
+      <h3 class="text-lg font-semibold mb-2">Community Module</h3>
+      <svg id="graph-community" width="100%" height="450"></svg>
+    </div>
+
+    <div class="graph-container">
+      <h3 class="text-lg font-semibold mb-2">Blog Module</h3>
+      <svg id="graph-blog" width="100%" height="300"></svg>
+    </div>
+
+    <div class="graph-container">
+      <h3 class="text-lg font-semibold mb-2">Master Schema (All Modules)</h3>
+      <svg id="graph-master" width="100%" height="650"></svg>
+    </div>
+  </section>
+
+  <!-- LAYER 3: PRODUCT MAPPING -->
+  <section>
+    <h2 class="text-2xl font-bold text-gray-700 mb-4">🚀 Layer 3 — Product Feature Mapping</h2>
+    <ul class="list-disc pl-6 text-gray-700 space-y-2">
+      <li><strong>Users & Skills → LinkedIn-style Profiles</strong>: Users create profiles, list known/learning skills, connect with others. Future scope: endorsements, AI-skill recommendations.</li>
+      <li><strong>Communities → Discord-style Groups</strong>: Users form communities, sub-categories, channels, chat/messages, and calls. Future scope: events, roles, monetization.</li>
+      <li><strong>Blogs → Medium-style Content</strong>: Users publish posts, comment, interact. Future scope: tags, likes, shares, rich media embedding.</li>
+      <li><strong>Master Integration</strong>: Users are the backbone; every feature ties back to them. Scalable for adding marketplace, jobs, or learning modules in future.</li>
+    </ul>
+  </section>
+
+<script>
+function renderGraph(containerId, nodes, edges) {
+  const g = new dagreD3.graphlib.Graph().setGraph({});
+  nodes.forEach(n => g.setNode(n.id, { label: n.label, class: "node" }));
+  edges.forEach(e => g.setEdge(e.from, e.to, { arrowhead: "vee" }));
+
+  const svg = d3.select(`#${containerId}`);
+  const inner = svg.append("g");
+
+  svg.append("defs").append("marker")
+    .attr("id", "arrowhead")
+    .attr("viewBox", "0 0 10 10")
+    .attr("refX", 8).attr("refY", 5)
+    .attr("markerWidth", 6).attr("markerHeight", 6)
+    .attr("orient", "auto")
+    .append("path").attr("d", "M 0 0 L 10 5 L 0 10 z").style("fill", "#a56a43");
+
+  const render = new dagreD3.render();
+  render(inner, g);
+
+  const { width: gWidth, height: gHeight } = g.graph();
+  svg.attr("viewBox", `0 0 ${gWidth+40} ${gHeight+40}`);
+  inner.attr("transform", "translate(20,20)");
+}
+
+/* Users & Skills */
+renderGraph("graph-users",
+  [
+    {id:"users", label:"Users\\n---\\nid (PK)\\nname, email, password\\nbio, profile_pic"},
+    {id:"skills", label:"Skills\\n---\\nid (PK)\\nname, category"},
+    {id:"known", label:"User_Known_Skills\\n---\\nid (PK)\\nuser_id (FK)\\nskill_id (FK)\\nlevel"},
+    {id:"learning", label:"User_Learning_Skills\\n---\\nid (PK)\\nuser_id (FK)\\nskill_id (FK)\\nprogress"},
+    {id:"connections", label:"Connections\\n---\\nid (PK)\\nuser_id (FK)\\nconnected_user_id (FK)\\nstatus"}
+  ],
+  [
+    {from:"users", to:"known"}, {from:"known", to:"skills"},
+    {from:"users", to:"learning"}, {from:"learning", to:"skills"},
+    {from:"users", to:"connections"}, {from:"connections", to:"users"}
+  ]
+);
+
+/* Community */
+renderGraph("graph-community",
+  [
+    {id:"users", label:"Users"},
+    {id:"communities", label:"Communities\\n---\\nid (PK)\\nname, desc\\ncreated_by (FK)"},
+    {id:"members", label:"Community_Members\\n---\\nid (PK)\\ncommunity_id (FK)\\nuser_id (FK)\\nrole"},
+    {id:"categories", label:"Community_Categories\\n---\\nid (PK)\\ncommunity_id (FK)\\nname"},
+    {id:"channels", label:"Channels\\n---\\nid (PK)\\ncategory_id (FK)\\nname, type"},
+    {id:"messages", label:"Messages\\n---\\nid (PK)\\nchannel_id (FK)\\nuser_id (FK)\\ncontent"},
+    {id:"calls", label:"Calls\\n---\\nid (PK)\\nchannel_id (FK)\\nstarted_at"}
+  ],
+  [
+    {from:"users", to:"communities"}, {from:"communities", to:"members"},
+    {from:"members", to:"users"}, {from:"communities", to:"categories"},
+    {from:"categories", to:"channels"}, {from:"channels", to:"messages"},
+    {from:"channels", to:"calls"}, {from:"users", to:"messages"}
+  ]
+);
+
+/* Blog */
+renderGraph("graph-blog",
+  [
+    {id:"users", label:"Users"},
+    {id:"posts", label:"Blog_Posts\\n---\\nid (PK)\\nuser_id (FK)\\ntitle, content"},
+    {id:"comments", label:"Blog_Comments\\n---\\nid (PK)\\npost_id (FK)\\nuser_id (FK)\\ncomment"}
+  ],
+  [
+    {from:"users", to:"posts"}, {from:"posts", to:"comments"}, {from:"comments", to:"users"}
+  ]
+);
+
+/* Master */
+renderGraph("graph-master",
+  [
+    {id:"users", label:"Users"},
+    {id:"skills", label:"Skills"},
+    {id:"known", label:"User_Known_Skills"},
+    {id:"learning", label:"User_Learning_Skills"},
+    {id:"connections", label:"Connections"},
+    {id:"communities", label:"Communities"},
+    {id:"members", label:"Community_Members"},
+    {id:"categories", label:"Community_Categories"},
+    {id:"channels", label:"Channels"},
+    {id:"messages", label:"Messages"},
+    {id:"calls", label:"Calls"},
+    {id:"posts", label:"Blog_Posts"},
+    {id:"comments", label:"Blog_Comments"}
+  ],
+  [
+    {from:"users", to:"known"}, {from:"known", to:"skills"},
+    {from:"users", to:"learning"}, {from:"learning", to:"skills"},
+    {from:"users", to:"connections"}, {from:"connections", to:"users"},
+    {from:"users", to:"communities"}, {from:"communities", to:"members"},
+    {from:"members", to:"users"}, {from:"communities", to:"categories"},
+    {from:"categories", to:"channels"}, {from:"channels", to:"messages"},
+    {from:"channels", to:"calls"}, {from:"users", to:"messages"},
+    {from:"users", to:"posts"}, {from:"posts", to:"comments"},
+    {from:"comments", to:"users"}
+  ]
+);
+</script>
+</body>
+</html>

@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Database Schema Explorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: A multi-panel SPA. A fixed left sidebar for navigation between high-level topics (Principles, Schemas, Advanced Concepts). The main content area dynamically displays the selected topic. The schema tables are rendered as interactive HTML, allowing users to click on foreign keys to jump to the referenced table, making relationships tangible. This structure was chosen to facilitate non-linear exploration, which is typical when studying database schemas, allowing developers to quickly cross-reference related parts of the system without linear scrolling. -->
+    <!-- Visualization & Content Choices: Report Info: Database schema tables -> Goal: Organize and show relationships -> Viz/Presentation: Interactive HTML tables with clickable foreign key links -> Interaction: Clicking a foreign key scrolls the view to the related table and highlights it -> Justification: Directly demonstrates table relationships interactively without complex diagrams, enhancing comprehension. Report Info: Abstract data concepts -> Goal: Compare/Inform -> Viz/Presentation: Bar chart showing simulated data distributions (e.g., user roles) -> Interaction: Buttons to switch the chart's dataset -> Justification: Adds a dynamic, quantitative element to an otherwise textual guide, making it more engaging. Library: Chart.js (Canvas). -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f7f4;
+            color: #4a4a4a;
+        }
+        .nav-link {
+            transition: all 0.2s ease-in-out;
+            border-left: 3px solid transparent;
+        }
+        .nav-link.active {
+            background-color: #edeae5;
+            color: #a56a43;
+            border-left-color: #a56a43;
+        }
+        .nav-link:hover {
+            background-color: #edeae5;
+        }
+        .content-section {
+            display: none;
+        }
+        .content-section.active {
+            display: block;
+        }
+        .table-highlight {
+            animation: highlight 2s ease-out;
+        }
+        @keyframes highlight {
+            0% { background-color: rgba(165, 106, 67, 0.3); }
+            100% { background-color: transparent; }
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .fk-link {
+            color: #a56a43;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="flex flex-col md:flex-row min-h-screen">
+        <!-- Sidebar Navigation -->
+        <aside class="w-full md:w-64 bg-[#efebe4] border-r border-gray-200/50 flex-shrink-0">
+            <div class="p-5">
+                <h1 class="text-xl font-bold text-[#a56a43]">Schema Explorer</h1>
+                <p class="text-sm text-gray-500 mt-1">MySQL Project Guide</p>
+            </div>
+            <nav id="main-nav" class="flex flex-row md:flex-col p-2 space-x-1 md:space-x-0 md:space-y-1">
+                <a href="#principles" class="nav-link p-3 rounded-md text-sm font-medium active">Core Principles</a>
+                <a href="#schema-user" class="nav-link p-3 rounded-md text-sm font-medium">User & Social Schema</a>
+                <a href="#schema-community" class="nav-link p-3 rounded-md text-sm font-medium">Community & Chat Schema</a>
+                <a href="#schema-blog" class="nav-link p-3 rounded-md text-sm font-medium">Blog Schema</a>
+                <a href="#visualization" class="nav-link p-3 rounded-md text-sm font-medium">Data Visualization</a>
+                <a href="#advanced" class="nav-link p-3 rounded-md text-sm font-medium">Advanced Topics</a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-4 sm:p-6 md:p-10">
+            <!-- Core Principles Section -->
+            <section id="principles" class="content-section active">
+                <h2 class="text-3xl font-bold text-gray-800 mb-4">Core Principles</h2>
+                <p class="mb-8 text-gray-600">A well-designed database is built on a foundation of core principles that ensure data integrity, performance, and scalability. This section provides an overview of the key concepts used in designing the schemas for this project.</p>
+                <div id="principles-container" class="space-y-6"></div>
+            </section>
+
+            <!-- User Schema Section -->
+            <section id="schema-user" class="content-section">
+                <h2 class="text-3xl font-bold text-gray-800 mb-4">User & Social Schema</h2>
+                 <p class="mb-8 text-gray-600">This part of the schema defines the core `users` table and related tables for social features like skills and connections (friend requests). Click on any foreign key to see the table it references.</p>
+                <div id="schema-user-container" class="space-y-8"></div>
+            </section>
+            
+            <!-- Community Schema Section -->
+            <section id="schema-community" class="content-section">
+                <h2 class="text-3xl font-bold text-gray-800 mb-4">Community & Chat Schema</h2>
+                 <p class="mb-8 text-gray-600">This schema outlines the structures for a Discord-like community system, including communities, channels, roles, messages, and future support for calls. The interactive table links will help you navigate these relationships.</p>
+                <div id="schema-community-container" class="space-y-8"></div>
+            </section>
+            
+            <!-- Blog Schema Section -->
+            <section id="schema-blog" class="content-section">
+                <h2 class="text-3xl font-bold text-gray-800 mb-4">Blog System Schema</h2>
+                 <p class="mb-8 text-gray-600">A content platform for users to create and interact with articles. This schema includes tables for posts and comments, forming the backbone of the blog. Explore the connections by clicking on the foreign key columns.</p>
+                <div id="schema-blog-container" class="space-y-8"></div>
+            </section>
+            
+            <!-- Data Visualization Section -->
+            <section id="visualization" class="content-section">
+                <h2 class="text-3xl font-bold text-gray-800 mb-4">Simulated Data Visualization</h2>
+                <p class="mb-8 text-gray-600">While the guide focuses on structure, it's helpful to visualize what kind of data these tables might hold. The chart below shows a simulated distribution of data based on the defined schemas. Use the buttons to switch between different data views and see how relationships might translate into analytics.</p>
+                <div class="bg-white p-6 rounded-lg shadow-sm">
+                    <div class="chart-container">
+                        <canvas id="dataChart"></canvas>
+                    </div>
+                    <div id="chart-controls" class="mt-6 text-center space-x-2">
+                        <button data-chart="userRoles" class="bg-[#a56a43] text-white px-4 py-2 rounded-md hover:bg-[#8e5a39] transition">User Roles</button>
+                        <button data-chart="messageTypes" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300 transition">Message Types</button>
+                        <button data-chart="connectionStatus" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300 transition">Connection Status</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Advanced Topics Section -->
+            <section id="advanced" class="content-section">
+                <h2 class="text-3xl font-bold text-gray-800 mb-4">Advanced Considerations</h2>
+                <p class="mb-8 text-gray-600">For any large-scale project, the initial schema design is just the beginning. Long-term success requires considering factors like scalability, performance optimization, security, and maintainability. This section outlines key strategies for ensuring the database remains robust as the application grows.</p>
+                <div id="advanced-container" class="space-y-6"></div>
+            </section>
+        </main>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    const schemaData = {
+        user: [
+            {
+                name: 'users',
+                description: 'Stores core user account and role information.',
+                columns: [
+                    { name: 'id', type: 'BIGINT UNSIGNED', constraints: 'PRIMARY KEY, AUTO_INCREMENT', description: 'Unique user identifier' },
+                    { name: 'full_name', type: 'VARCHAR(255)', constraints: 'NOT NULL', description: 'User\'s full name' },
+                    { name: 'email', type: 'VARCHAR(255)', constraints: 'NOT NULL, UNIQUE', description: 'User\'s email address' },
+                    { name: 'password_hash', type: 'VARCHAR(255)', constraints: 'NOT NULL', description: 'Hashed password' },
+                    { name: 'role', type: 'ENUM(\'user\', \'admin\')', constraints: 'NOT NULL, DEFAULT \'user\'', description: 'User\'s role in the system' },
+                    { name: 'created_at', type: 'TIMESTAMP', constraints: 'DEFAULT CURRENT_TIMESTAMP', description: 'Account creation timestamp' },
+                    { name: 'updated_at', type: 'TIMESTAMP', constraints: 'DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP', description: 'Last update timestamp' }
+                ]
+            },
+            {
+                name: 'skills',
+                description: 'A master list of all skills available on the platform.',
+                columns: [
+                    { name: 'id', type: 'INT UNSIGNED', constraints: 'PRIMARY KEY, AUTO_INCREMENT', description: 'Unique skill identifier' },
+                    { name: 'name', type: 'VARCHAR(100)', constraints: 'NOT NULL, UNIQUE', description: 'Name of the skill' }
+                ]
+            },
+            {
+                name: 'user_known_skills',
+                description: 'Links users to the skills they already have (Many-to-Many).',
+                columns: [
+                    { name: 'user_id', type: 'BIGINT UNSIGNED', constraints: 'PRIMARY KEY, FOREIGN KEY', ref: 'users', description: 'References users.id' },
+                    { name: 'skill_id', type: 'INT UNSIGNED', constraints: 'PRIMARY KEY, FOREIGN KEY', ref: 'skills', description: 'References skills.id' }
+                ]
+            },
+             {
+                name: 'user_learning_skills',
+                description: 'Links users to skills they want to learn (Many-to-Many).',
+                columns: [
+                    { name: 'user_id', type: 'BIGINT UNSIGNED', constraints: 'PRIMARY KEY, FOREIGN KEY', ref: 'users', description: 'References users.id' },
+                    { name: 'skill_id', type: 'INT UNSIGNED', constraints: 'PRIMARY KEY, FOREIGN KEY', ref: 'skills', description: 'References skills.id' }
+                ]
+            },
+            {
+                name: 'connections',
+                description: 'Manages "friend request" status between two users.',
+                columns: [
+                    { name: 'user_one_id', type: 'BIGINT UNSIGNED', constraints: 'PRIMARY KEY, FOREIGN KEY', ref: 'users', description: 'First user in the relationship' },
+                    { name: 'user_two_id', type: 'BIGINT UNSIGNED', constraints: 'PRIMARY KEY, FOREIGN KEY', ref: 'users', description: 'Second user in the relationship' },
+                    { name: 'status', type: 'ENUM(\'pending\', \'accepted\', \'declined\', \'blocked\')', constraints: 'NOT NULL', description: 'Current status of the connection' },
+                    { name: 'action_user_id', type: 'BIGINT UNSIGNED', constraints: 'NOT NULL, FOREIGN KEY', ref: 'users', description: 'User who initiated the last action' },
+                    { name: 'initial_message', type: 'TEXT', constraints: 'NULL', description: 'Optional message with request' }
+                ]
+            }
+        ],
+        community: [
+            {
+                name: 'communities',
+                description: 'The top-level container, like a Discord server.',
+                columns: [
+                    { name: 'id', type: 'BIGINT UNSIGNED', constraints: 'PRIMARY KEY, AUTO_INCREMENT', description: 'Unique community identifier' },
+                    { name: 'owner_id', type: 'BIGINT UNSIGNED', constraints: 'NOT NULL, FOREIGN KEY', ref: 'users', description: 'The community creator' },
+                    { name: 'name', type: 'VARCHAR(255)', constraints: 'NOT NULL', description: 'Name of the community' },
+                    { name: 'description', type: 'TEXT', constraints: 'NULL', description: 'Description of the community' },
+                ]
+            },
+             {
+                name: 'community_members',
+                description: 'Links users to the communities they have joined.',
+                columns: [
+                    { name: 'community_id', type: 'BIGINT UNSIGNED', constraints: 'PRIMARY KEY, FOREIGN KEY', ref: 'communities', description: 'References communities.id' },
+                    { name: 'user_id', type: 'BIGINT UNSIGNED', constraints: 'PRIMARY KEY, FOREIGN KEY', ref: 'users', description: 'References users.id' },
+                    { name: 'role', type: 'ENUM(\'admin\', \'moderator\', \'member\')', constraints: 'NOT NULL DEFAULT \'member\'', description: 'User\'s role in the community' },
+                ]
+            },
+            {
+                name: 'community_categories',
+                description: 'Groups channels within a community.',
+                 columns: [
+                    { name: 'id', type: 'BIGINT UNSIGNED', constraints: 'PRIMARY KEY, AUTO_INCREMENT', description: 'Unique category ID' },
+                    { name: 'community_id', type: 'BIGINT UNSIGNED', constraints: 'NOT NULL, FOREIGN KEY', ref: 'communities', description: 'Community this category belongs to' },
+                    { name: 'name', type: 'VARCHAR(100)', constraints: 'NOT NULL', description: 'Name of the category' },
+                ]
+            },
+            {
+                name: 'channels',
+                description: 'A single chat room or voice channel.',
+                columns: [
+                    { name: 'id', type: 'BIGINT UNSIGNED', constraints: 'PRIMARY KEY, AUTO_INCREMENT', description: 'Unique channel ID' },
+                    { name: 'category_id', type: 'BIGINT UNSIGNED', constraints: 'NOT NULL, FOREIGN KEY', ref: 'community_categories', description: 'The category this channel is in' },
+                    { name: 'name', type: 'VARCHAR(100)', constraints: 'NOT NULL', description: 'Name of the channel' },
+                    { name: 'type', type: 'ENUM(\'text\', \'voice\')', constraints: 'NOT NULL DEFAULT \'text\'', description: 'Type of channel' },
+                ]
+            },
+            {
+                name: 'messages',
+                description: 'Stores messages for direct and channel chats.',
+                columns: [
+                    { name: 'id', type: 'BIGINT UNSIGNED', constraints: 'PRIMARY KEY, AUTO_INCREMENT', description: 'Unique message identifier' },
+                    { name: 'sender_id', type: 'BIGINT UNSIGNED', constraints: 'NOT NULL, FOREIGN KEY', ref: 'users', description: 'The message sender' },
+                    { name: 'channel_id', type: 'BIGINT UNSIGNED', constraints: 'FOREIGN KEY, NULL', ref: 'channels', description: 'For community messages' },
+                    { name: 'receiver_id', type: 'BIGINT UNSIGNED', constraints: 'FOREIGN KEY, NULL', ref: 'users', description: 'For direct messages' },
+                    { name: 'content_type', type: 'ENUM(\'text\', \'image\', \'file\')', constraints: 'NOT NULL DEFAULT \'text\'', description: 'The type of content' },
+                    { name: 'content', type: 'TEXT', constraints: 'NULL', description: 'The text of the message (or emoji)' },
+                    { name: 'file_url', type: 'VARCHAR(2048)', constraints: 'NULL', description: 'URL to image/file' },
+                    { name: 'created_at', type: 'TIMESTAMP', constraints: 'DEFAULT CURRENT_TIMESTAMP', description: 'Message creation timestamp' }
+                ]
+            },
+            {
+                name: 'calls',
+                description: 'Logs audio or video call sessions (Future Implementation).',
+                columns: [
+                    { name: 'id', type: 'BIGINT UNSIGNED', constraints: 'PRIMARY KEY, AUTO_INCREMENT', description: 'Unique call identifier' },
+                    { name: 'channel_id', type: 'BIGINT UNSIGNED', constraints: 'FOREIGN KEY, NULL', ref: 'channels', description: 'For voice channel calls' },
+                    { name: 'initiator_id', type: 'BIGINT UNSIGNED', constraints: 'NOT NULL, FOREIGN KEY', ref: 'users', description: 'User who started the call' },
+                    { name: 'start_time', type: 'TIMESTAMP', constraints: 'NOT NULL', description: 'When the call started' },
+                    { name: 'end_time', type: 'TIMESTAMP', constraints: 'NULL', description: 'When the call ended' }
+                ]
+            }
+        ],
+        blog: [
+            {
+                name: 'blog_posts',
+                description: 'Stores the content of blog articles.',
+                columns: [
+                    { name: 'id', type: 'BIGINT UNSIGNED', constraints: 'PRIMARY KEY, AUTO_INCREMENT', description: 'Unique post identifier' },
+                    { name: 'author_id', type: 'BIGINT UNSIGNED', constraints: 'NOT NULL, FOREIGN KEY', ref: 'users', description: 'The user who wrote the post' },
+                    { name: 'title', type: 'VARCHAR(255)', constraints: 'NOT NULL', description: 'Title of the post' },
+                    { name: 'content', type: 'LONGTEXT', constraints: 'NOT NULL', description: 'Body of the post' },
+                    { name: 'status', type: 'ENUM(\'draft\', \'published\')', constraints: 'NOT NULL DEFAULT \'draft\'', description: 'Publication status' }
+                ]
+            },
+            {
+                name: 'blog_comments',
+                description: 'Stores user comments on blog posts.',
+                columns: [
+                    { name: 'id', type: 'BIGINT UNSIGNED', constraints: 'PRIMARY KEY, AUTO_INCREMENT', description: 'Unique comment identifier' },
+                    { name: 'post_id', type: 'BIGINT UNSIGNED', constraints: 'NOT NULL, FOREIGN KEY', ref: 'blog_posts', description: 'The post this comment belongs to' },
+                    { name: 'user_id', type: 'BIGINT UNSIGNED', constraints: 'NOT NULL, FOREIGN KEY', ref: 'users', description: 'The user who wrote the comment' },
+                    { name: 'content', type: 'TEXT', constraints: 'NOT NULL', description: 'The comment text' },
+                ]
+            }
+        ]
+    };
+
+    const principlesData = [
+        { name: 'Normalization', description: 'The process of organizing tables to minimize data redundancy. We aim for Third Normal Form (3NF), ensuring data is stored logically and without unnecessary duplication.' },
+        { name: 'Data Types', description: 'Choosing the correct data type (e.g., `BIGINT`, `VARCHAR`, `TIMESTAMP`) is crucial for performance and data integrity. We use the smallest appropriate type to conserve space.' },
+        { name: 'Indexing', description: 'Indexes are used to speed up data retrieval. Primary and foreign keys are always indexed, as are columns frequently used in queries, to ensure fast joins and filtering.' },
+        { name: 'Relationships', description: 'Defining clear One-to-One, One-to-Many, and Many-to-Many relationships is key. We use foreign keys and junction tables to logically link data across the schema.' }
+    ];
+
+    const advancedData = [
+        { name: 'Scalability', description: 'For a large project, plan for growth. Techniques like table partitioning (splitting a huge table like `messages` by date) and sharding (distributing the database across servers) can be critical.' },
+        { name: 'Performance', description: 'Beyond indexing, use tools like `EXPLAIN` to analyze and optimize slow queries. Implementing a caching layer with Redis or Memcached can drastically reduce database load for frequently accessed data.' },
+        { name: 'Security', description: 'Never connect to the database with a root user from your application. Create dedicated users with the minimum required permissions. Encrypt sensitive data both in transit and at rest.' },
+        { name: 'Maintainability', description: 'Use consistent naming conventions for all tables and columns. Employ a database migration tool to manage and version control schema changes, making updates predictable and reversible.' }
+    ];
+
+    function createTableHTML(table) {
+        let columnsHTML = table.columns.map(col => `
+            <tr class="border-b border-gray-200/80">
+                <td class="p-3 font-mono text-sm ${col.ref ? 'fk-link' : ''}" ${col.ref ? `data-ref="${col.ref}"` : ''}>${col.name}</td>
+                <td class="p-3 font-mono text-sm text-gray-600">${col.type}</td>
+                <td class="p-3 text-sm text-gray-500">${col.description}</td>
+            </tr>
+        `).join('');
+
+        return `
+            <div id="table-${table.name}" class="bg-white rounded-lg shadow-sm overflow-hidden">
+                <div class="p-4 border-b border-gray-200">
+                    <h3 class="text-lg font-bold text-gray-800">${table.name}</h3>
+                    <p class="text-sm text-gray-500 mt-1">${table.description}</p>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="bg-gray-50 text-left text-xs text-gray-500 uppercase tracking-wider">
+                                <th class="p-3 font-medium">Column Name</th>
+                                <th class="p-3 font-medium">Data Type</th>
+                                <th class="p-3 font-medium">Description</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200/80">
+                            ${columnsHTML}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+    }
+
+    function createInfoCardHTML(item) {
+        return `
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-2">${item.name}</h3>
+                <p class="text-gray-600">${item.description}</p>
+            </div>
+        `;
+    }
+
+    document.getElementById('schema-user-container').innerHTML = schemaData.user.map(createTableHTML).join('');
+    document.getElementById('schema-community-container').innerHTML = schemaData.community.map(createTableHTML).join('');
+    document.getElementById('schema-blog-container').innerHTML = schemaData.blog.map(createTableHTML).join('');
+    document.getElementById('principles-container').innerHTML = principlesData.map(createInfoCardHTML).join('');
+    document.getElementById('advanced-container').innerHTML = advancedData.map(createInfoCardHTML).join('');
+
+    const navLinks = document.querySelectorAll('.nav-link');
+    const contentSections = document.querySelectorAll('.content-section');
+
+    navLinks.forEach(link => {
+        link.addEventListener('click', e => {
+            e.preventDefault();
+            const targetId = link.getAttribute('href').substring(1);
+            
+            navLinks.forEach(l => l.classList.remove('active'));
+            link.classList.add('active');
+            
+            contentSections.forEach(section => {
+                section.classList.remove('active');
+                if (section.id === targetId) {
+                    section.classList.add('active');
+                }
+            });
+        });
+    });
+    
+    document.body.addEventListener('click', e => {
+        if (e.target.classList.contains('fk-link')) {
+            const tableName = e.target.dataset.ref;
+            const targetTable = document.getElementById(`table-${tableName}`);
+            if (targetTable) {
+                const sectionId = targetTable.closest('.content-section').id;
+                document.querySelector(`a[href="#${sectionId}"]`).click();
+                setTimeout(() => {
+                    targetTable.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    targetTable.classList.add('table-highlight');
+                    setTimeout(() => targetTable.classList.remove('table-highlight'), 2000);
+                }, 100);
+            }
+        }
+    });
+
+    const chartData = {
+        userRoles: {
+            labels: ['User', 'Admin'],
+            data: [5840, 60]
+        },
+        messageTypes: {
+            labels: ['Text', 'Image', 'File'],
+            data: [150230, 25040, 8300]
+        },
+        connectionStatus: {
+            labels: ['Accepted', 'Pending', 'Blocked'],
+            data: [8200, 1500, 350]
+        }
+    };
+    
+    let currentChart;
+    const ctx = document.getElementById('dataChart').getContext('2d');
+
+    function createChart(chartType) {
+        if(currentChart) {
+            currentChart.destroy();
+        }
+        const { labels, data } = chartData[chartType];
+        currentChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Count',
+                    data: data,
+                    backgroundColor: 'rgba(165, 106, 67, 0.6)',
+                    borderColor: 'rgba(165, 106, 67, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+    }
+    
+    const chartControls = document.getElementById('chart-controls');
+    chartControls.addEventListener('click', e => {
+        if (e.target.tagName === 'BUTTON') {
+            const chartType = e.target.dataset.chart;
+            createChart(chartType);
+
+            chartControls.querySelectorAll('button').forEach(btn => {
+                btn.classList.remove('bg-[#a56a43]', 'text-white');
+                btn.classList.add('bg-gray-200', 'text-gray-700');
+            });
+            e.target.classList.add('bg-[#a56a43]', 'text-white');
+            e.target.classList.remove('bg-gray-200', 'text-gray-700');
+        }
+    });
+
+    createChart('userRoles');
+});
+</script>
+
+
+
+
+
+<!-- Flowchart.js -->
+<script src="https://cdn.jsdelivr.net/npm/flowchart.js@1.17.1/release/flowchart.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  // User & Skills Flow
+  const userSkillCode = `
+    users=>start: users
+    skills=>operation: skills
+    known=>operation: user_known_skills
+    learning=>operation: user_learning_skills
+    conn=>operation: connections
+
+    users->known->skills
+    users->learning->skills
+    users->conn->users
+  `;
+  flowchart.parse(userSkillCode).drawSVG("user-skill-flow", {
+    'line-width': 2,
+    'line-color': '#a56a43',
+    'font-size': 12,
+    'font-color': '#4a4a4a',
+    'element-color': '#8e5a39',
+    'fill': '#edeae5',
+    'yes-text': 'yes', 'no-text': 'no',
+    'arrow-end': 'block'
+  });
+
+  // Community Flow
+  const communityCode = `
+    users=>start: users
+    comm=>operation: communities
+    members=>operation: community_members
+    cat=>operation: community_categories
+    chan=>operation: channels
+    msg=>operation: messages
+    call=>operation: calls
+
+    users->comm
+    comm->members->users
+    comm->cat->chan->msg
+    chan->call
+    users->msg
+  `;
+  flowchart.parse(communityCode).drawSVG("community-flow", {
+    'line-width': 2,
+    'line-color': '#a56a43',
+    'font-size': 12,
+    'font-color': '#4a4a4a',
+    'element-color': '#8e5a39',
+    'fill': '#edeae5',
+    'arrow-end': 'block'
+  });
+
+  // Blog Flow
+  const blogCode = `
+    users=>start: users
+    posts=>operation: blog_posts
+    comments=>operation: blog_comments
+
+    users->posts->comments->users
+  `;
+  flowchart.parse(blogCode).drawSVG("blog-flow", {
+    'line-width': 2,
+    'line-color': '#a56a43',
+    'font-size': 12,
+    'font-color': '#4a4a4a',
+    'element-color': '#8e5a39',
+    'fill': '#edeae5',
+    'arrow-end': 'block'
+  });
+});
+</script>
+
+</body>
+</html>
+
