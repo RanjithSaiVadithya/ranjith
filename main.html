@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Interactive Database Schema Explorer — SkillSwap</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    body { font-family: 'Inter', sans-serif; background-color: #f8f7f4; color: #39424a; }
+    .nav-link { transition: all 0.18s ease-in-out; border-left: 3px solid transparent; display:block; }
+    .nav-link.active { background-color: #edeae5; color: #a56a43; border-left-color: #a56a43; }
+    .nav-link:hover { background-color: #f1efe9; color: #8e5a39; }
+    .content-section { display: none; }
+    .content-section.active { display: block; }
+    .table-highlight { animation: highlight 2s ease-out; }
+    @keyframes highlight { 0% { background-color: rgba(165,106,67,0.28); } 100% { background-color: transparent; } }
+    .chart-container { position: relative; width: 100%; max-width: 660px; margin-left:auto; margin-right:auto; height:300px; max-height:420px; }
+    @media (min-width: 768px) { .chart-container { height:360px; } }
+    .fk-link { color: #a56a43; text-decoration: underline; cursor: pointer; }
+    pre.code { background:#0b1220; color:#d7eaf0; padding:12px; border-radius:8px; overflow:auto; font-size:13px; }
+    .kb { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace; font-size:12px; background:#f2f4f7; padding:6px 8px; border-radius:6px; }
+    .muted { color:#6b7280; }
+    .card { background:white; padding:16px; border-radius:10px; box-shadow:0 6px 20px rgba(15,23,42,0.04); }
+  </style>
+</head>
+<body class="antialiased">
+
+  <div class="flex flex-col md:flex-row min-h-screen">
+    <!-- Sidebar -->
+    <aside class="w-full md:w-64 bg-[#efebe4] border-r border-gray-200/50 flex-shrink-0">
+      <div class="p-5">
+        <h1 class="text-xl font-bold text-[#a56a43]">SkillSwap — Schema Explorer</h1>
+        <p class="text-sm muted mt-1">Interactive design + business report</p>
+      </div>
+
+      <nav id="main-nav" class="flex flex-row md:flex-col p-2 space-x-1 md:space-x-0 md:space-y-1">
+        <a href="#principles" class="nav-link p-3 rounded-md text-sm font-medium active">Core Principles</a>
+        <a href="#schema-user" class="nav-link p-3 rounded-md text-sm font-medium">User & Social Schema</a>
+        <a href="#schema-community" class="nav-link p-3 rounded-md text-sm font-medium">Community & Chat Schema</a>
+        <a href="#schema-blog" class="nav-link p-3 rounded-md text-sm font-medium">Blog Schema</a>
+        <a href="#plans" class="nav-link p-3 rounded-md text-sm font-medium">Plans & Billing</a>
+        <a href="#calls" class="nav-link p-3 rounded-md text-sm font-medium">Calls & Sessions</a>
+        <a href="#business" class="nav-link p-3 rounded-md text-sm font-medium">Business Report</a>
+        <a href="#visualization" class="nav-link p-3 rounded-md text-sm font-medium">Data Visualization</a>
+        <a href="#ddl" class="nav-link p-3 rounded-md text-sm font-medium">DDL & APIs</a>
+        <a href="#advanced" class="nav-link p-3 rounded-md text-sm font-medium">Advanced Topics</a>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-4 sm:p-6 md:p-10">
+      <!-- Core Principles -->
+      <section id="principles" class="content-section active">
+        <h2 class="text-3xl font-bold text-gray-800 mb-4">Core Principles</h2>
+        <p class="mb-6 muted">Design goals for SkillSwap: simplicity, scalability, privacy-first, monetization flexibility, and community engagement.</p>
+        <div id="principles-container" class="space-y-4"></div>
+      </section>
+
+      <!-- User Schema -->
+      <section id="schema-user" class="content-section">
+        <h2 class="text-3xl font-bold text-gray-800 mb-4">User & Social Schema</h2>
+        <p class="mb-6 muted">Core user account tables, skills, connections, and subscription-related tables.</p>
+        <div id="schema-user-container" class="space-y-6"></div>
+      </section>
+
+      <!-- Community Schema -->
+      <section id="schema-community" class="content-section">
+        <h2 class="text-3xl font-bold text-gray-800 mb-4">Community & Chat Schema</h2>
+        <p class="mb-6 muted">Communities, categories, channels, messages, calls, and moderation tables.</p>
+        <div id="schema-community-container" class="space-y-6"></div>
+      </section>
+
+      <!-- Blog Schema -->
+      <section id="schema-blog" class="content-section">
+        <h2 class="text-3xl font-bold text-gray-800 mb-4">Blog System Schema</h2>
+        <p class="mb-6 muted">Posts and comments tables for knowledge sharing and content marketing.</p>
+        <div id="schema-blog-container" class="space-y-6"></div>
+      </section>
+
+      <!-- Plans & Billing -->
+      <section id="plans" class="content-section">
+        <h2 class="text-3xl font-bold text-gray-800 mb-4">Plans & Billing</h2>
+        <div class="card mb-4">
+          <h3 class="font-semibold">Pricing model (example)</h3>
+          <ul class="muted ml-4 mt-2">
+            <li><strong>Free (trial 1 month)</strong> — limited connections, text chat, limited community join</li>
+            <li><strong>Basic — ₹1,900 / 6 months</strong> — limited call minutes, up to 50 connections, full chat & community access</li>
+            <li><strong>Pro — ₹3,900 / 12 months</strong> — higher limits, featured mentor listing</li>
+          </ul>
+          <p class="muted mt-3">Plans are modeled in DB `plans` and `subscriptions`. Billing events stored to `transactions`.</p>
+        </div>
+
+        <div class="card">
+          <h3 class="font-semibold">Tables (plans, subscriptions, subscription_usage)</h3>
+          <pre class="code" id="plans-ddl">// plans, subscriptions and usage are in DDL section — jump to DDL & APIs tab for full SQL</pre>
+        </div>
+      </section>
+
+      <!-- Calls & Sessions -->
+      <section id="calls" class="content-section">
+        <h2 class="text-3xl font-bold text-gray-800 mb-4">Calls & Sessions</h2>
+        <div class="card mb-4">
+          <h3 class="font-semibold">Functional flow</h3>
+          <ol class="muted ml-4 mt-2">
+            <li>Create session (scheduling) or start ad-hoc call → backend inserts into <code>calls</code> (call_uuid)</li>
+            <li>Use media provider (Agora / Twilio / Jitsi) with call_uuid</li>
+            <li>Record participants in <code>call_participants</code>; update durations on leave</li>
+            <li>Update <code>subscription_usage</code> minutes for billing/enforcement</li>
+          </ol>
+        </div>
+
+        <div class="card">
+          <h3 class="font-semibold">Tables</h3>
+          <div class="muted">Calls, call_participants, sessions — included in schema data below (click FK links to navigate tables).</div>
+        </div>
+      </section>
+
+      <!-- Business Report -->
+      <section id="business" class="content-section">
+        <h2 class="text-3xl font-bold text-gray-800 mb-4">Business Report</h2>
+        <div class="card mb-4">
+          <h3 class="font-semibold">Executive summary</h3>
+          <p class="muted mt-2">SkillSwap: a peer-to-peer platform for focused skill exchange and mentorship. Targeting learners who need specific practical skills and mentors who want flexible monetization. Monetize via subscriptions, featured listing, and enterprise licensing.</p>
+        </div>
+
+        <div class="card mb-4">
+          <h3 class="font-semibold">Go-to-market & Growth</h3>
+          <ul class="muted ml-4 mt-2">
+            <li>Launch pilot in targeted communities (DevOps, Web, ML)</li>
+            <li>Content marketing: mentor highlights, use-case success stories</li>
+            <li>Partnerships with colleges & freelancing groups</li>
+            <li>Referral credits & trial incentives</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h3 class="font-semibold">KPIs</h3>
+          <ul class="muted ml-4 mt-2">
+            <li>MAU, paid conversion, average session minutes, ARPU, churn</li>
+            <li>Monitor mentor rating, time-to-match, retention of matched pairs</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Visualization -->
+      <section id="visualization" class="content-section">
+        <h2 class="text-3xl font-bold text-gray-800 mb-4">Simulated Data Visualization</h2>
+        <p class="muted mb-4">Visual examples of user roles, message types and connection status distribution (simulated).</p>
+        <div class="bg-white p-6 rounded-lg shadow-sm">
+          <div class="chart-container">
+            <canvas id="dataChart"></canvas>
+          </div>
+          <div id="chart-controls" class="mt-6 text-center space-x-2">
+            <button data-chart="userRoles" class="bg-[#a56a43] text-white px-4 py-2 rounded-md hover:bg-[#8e5a39] transition">User Roles</button>
+            <button data-chart="messageTypes" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300 transition">Message Types</button>
+            <button data-chart="connectionStatus" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300 transition">Connection Status</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- DDL & APIs -->
+      <section id="ddl" class="content-section">
+        <h2 class="text-3xl font-bold text-gray-800 mb-4">DDL & APIs</h2>
+
+        <div class="card mb-4">
+          <h3 class="font-semibold">Quick API map</h3>
+          <ul class="muted ml-4 mt-2">
+            <li>POST /api/register — register user</li>
+            <li>GET /api/users?skill=aws — search mentors by skill</li>
+            <li>POST /api/connection-requests — send connection request</li>
+            <li>POST /api/connections/{id}/accept — accept</li>
+            <li>POST /api/calls/start — create call & get call_uuid</li>
+            <li>POST /api/subscriptions/checkout — payment checkout</li>
+          </ul>
+        </div>
+
+        <div class="card mb-4">
+          <h3 class="font-semibold">DDL snippets (plans, subscriptions, calls)</h3>
+          <pre class="code">
+CREATE TABLE plans ( id INT AUTO_INCREMENT PRIMARY KEY, slug VARCHAR(64) UNIQUE, name VARCHAR(128), period_months TINYINT, price_cents BIGINT );
+CREATE TABLE subscriptions ( id BIGINT AUTO_INCREMENT PRIMARY KEY, user_id BIGINT NOT NULL, plan_id INT NOT NULL, started_at TIMESTAMP NOT NULL, expires_at TIMESTAMP NOT NULL, status ENUM('active','cancelled','expired') DEFAULT 'active' );
+CREATE TABLE calls ( id BIGINT AUTO_INCREMENT PRIMARY KEY, call_uuid CHAR(36) NOT NULL UNIQUE, initiated_by BIGINT NOT NULL, started_at TIMESTAMP NULL, ended_at TIMESTAMP NULL, duration_seconds INT NULL, call_type ENUM('audio','video') DEFAULT 'audio' );
+          </pre>
+        </div>
+
+        <div class="card">
+          <h3 class="font-semibold">Enforcement examples (pseudocode)</h3>
+          <pre class="code">// Example: before starting call, check subscription minutes
+if (usage.call_minutes_used + estimated_minutes > plan.monthly_call_minutes) {
+  return error('Call minutes quota exceeded');
+}
+          </pre>
+        </div>
+      </section>
+
+      <!-- Advanced Topics -->
+      <section id="advanced" class="content-section">
+        <h2 class="text-3xl font-bold text-gray-800 mb-4">Advanced Considerations</h2>
+        <div id="advanced-container" class="space-y-4"></div>
+      </section>
+    </main>
+  </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+  /* ========== Schema data (extended) ========== */
+  const schemaData = {
+    user: [
+      {
+        name: 'users',
+        description: 'Stores core user account and role information and privacy settings.',
+        columns: [
+          { name: 'id', type: 'BIGINT UNSIGNED', constraints: 'PRIMARY KEY, AUTO_INCREMENT', description: 'Unique user identifier' },
+          { name: 'full_name', type: 'VARCHAR(255)', constraints: 'NOT NULL', description: 'User display name' },
+          { name: 'email', type: 'VARCHAR(255)', constraints: 'NOT NULL, UNIQUE', description: 'Login email (PII)' },
+          { name: 'password_hash', type: 'VARCHAR(255)', constraints: 'NOT NULL', description: 'Password hash (bcrypt/argon2)' },
+          { name: 'role', type: 'ENUM(\'user\',\'admin\')', constraints: 'NOT NULL DEFAULT \'user\'', description: 'Role' },
+          { name: 'plan_id', type: 'INT', constraints: 'NULL, FOREIGN KEY', ref: 'plans', description: 'Active subscription plan' },
+          { name: 'created_at', type: 'TIMESTAMP', constraints: 'DEFAULT CURRENT_TIMESTAMP', description: 'Account creation' },
+          { name: 'deleted_at', type: 'TIMESTAMP', constraints: 'NULL', description: 'Soft delete' }
+        ]
+      },
+      {
+        name: 'skills',
+        description: 'Master list of skills (normalized).',
+        columns: [
+          { name: 'id', type: 'INT UNSIGNED', constraints: 'PRIMARY KEY, AUTO_INCREMENT', description: 'Skill id' },
+          { name: 'name', type: 'VARCHAR(100)', constraints: 'NOT NULL, UNIQUE', description: 'Skill name' },
+          { name: 'category', type: 'VARCHAR(100)', constraints: 'NULL', description: 'Optional category' }
+        ]
+      },
+      {
+        name: 'user_known_skills',
+        description: 'Users -> known skills (M:N).',
+        columns: [
+          { name: 'id', type: 'BIGINT UNSIGNED', constraints: 'PRIMARY KEY, AUTO_INCREMENT', description: 'PK' },
+          { name: 'user_id', type: 'BIGINT UNSIGNED', constraints: 'NOT NULL, FOREIGN KEY', ref: 'users', description: 'References users.id' },
+          { name: 'skill_id', type: 'INT UNSIGNED', constraints: 'NOT NULL, FOREIGN KEY', ref: 'skills', description: 'References skills.id' },
+          { name: 'level', type: 'ENUM(\'beginner\',\'intermediate\',\'expert\')', constraints: 'NOT NULL DEFAULT \'beginner\'', description: 'Self reported level' }
+        ]
+      },
+      {
+        name: 'user_learning_skills',
+        description: 'Users -> skills they want to learn (M:N).',
+        columns: [
+          { name: 'id', type: 'BIGINT UNSIGNED', constraints: 'PRIMARY KEY, AUTO_INCREMENT', description: 'PK' },
+          { name: 'user_id', type: 'BIGINT UNSIGNED', constraints: 'NOT NULL, FOREIGN KEY', ref: 'users', description: 'References users.id' },
+          { name: 'skill_id', type: 'INT UNSIGNED', constraints: 'NOT NULL, FOREIGN KEY', ref: 'skills', description: 'References skills.id' },
+          { name: 'progress_pct', type: 'TINYINT UNSIGNED', constraints: 'NOT NULL DEFAULT 0', description: 'Learning progress' }
+        ]
+      },
+      {
+        name: 'connection_requests',
+        description: 'Pending requests user->user (message included).',
+        columns: [
+          { name: 'id', type: 'BIGINT UNSIGNED', constraints: 'PRIMARY KEY, AUTO_INCREMENT', description: 'PK' },
+          { name: 'requester_id', type: 'BIGINT UNSIGNED', constraints: 'NOT NULL, FOREIGN KEY', ref: 'users', description: 'Sender' },
+          { name: 'target_id', type: 'BIGINT UNSIGNED', constraints: 'NOT NULL, FOREIGN KEY', ref: 'users', description: 'Receiver' },
+          { name: 'message', type: 'TEXT', constraints: 'NULL', description: 'Intro message' },
+          { name: 'status', type: 'ENUM(\'pending\',\'cancelled\',\'declined\',\'accepted\')', constraints: 'NOT NULL DEFAULT \'pending\'', description: 'Request state' }
+        ]
+      },
+      {
+        name: 'connections',
+        description: 'Mutual accepted connections.',
+        columns: [
+          { name: 'id', type: 'BIGINT UNSIGNED', constraints: 'PRIMARY KEY, AUTO_INCREMENT', description: 'PK' },
+          { name: 'user_a', type: 'BIGINT UNSIGNED', constraints: 'NOT NULL, FOREIGN KEY', ref: 'users', description: 'One side' },
+          { name: 'user_b', type: 'BIGINT UNSIGNED', constraints: 'NOT NULL, FOREIGN KEY', ref: 'users', description: 'Other side' },
+          { name: 'role_a_to_b', type: 'ENUM(\'student\',\'teacher\',\'peer\')', constraints: 'NULL', description: 'Optional role' }
+        ]
+      }
+    ],
+
+    community: [
+      {
+        name: 'communities',
+        description: 'Top-level groups (public/private).',
+        columns: [
+          { name: 'id', type: 'BIGINT UNSIGNED', constraints: 'PRIMARY KEY, AUTO_INCREMENT', description: 'PK' },
+          { name: 'owner_id', type: 'BIGINT UNSIGNED', constraints: 'NOT NULL, FOREIGN KEY', ref: 'users', description: 'Creator' },
+          { name: 'name', type: 'VARCHAR(255)', constraints: 'NOT NULL', description: 'Community name' },
+          { name: 'is_public', type: 'TINYINT(1)', constraints: 'NOT NULL DEFAULT 1', description: 'Public flag' }
+        ]
+      },
+      {
+        name: 'community_members',
+        description: 'Members of communities and roles.',
+        columns: [
+          { name: 'id', type: 'BIGINT UNSIGNED', constraints: 'PRIMARY KEY, AUTO_INCREMENT', description: 'PK' },
+          { name: 'community_id', type: 'BIGINT UNSIGNED', constraints: 'NOT NULL, FOREIGN KEY', ref: 'communities', description: 'FK' },
+          { name: 'user_id', type: 'BIGINT UNSIGNED', constraints: 'NOT NULL, FOREIGN KEY', ref: 'users', description: 'FK' },
+          { name: 'role', type: 'ENUM(\'admin\',\'moderator\',\'member\')', constraints: 'NOT NULL DEFAULT \'member\'', description: 'Role' }
+        ]
+      },
+      {
+        name: 'community_categories',
+        description: 'Channel grouping inside community.',
+        columns: [
+          { name: 'id', type: 'BIGINT UNSIGNED', constraints: 'PRIMARY KEY, AUTO_INCREMENT', description: 'PK' },
+          { name: 'community_id', type: 'BIGINT UNSIGNED', constraints: 'NOT NULL, FOREIGN KEY', ref: 'communities', description: 'FK' },
+          { name: 'name', type: 'VARCHAR(150)', constraints: 'NOT NULL', description: 'Category name' }
+        ]
+      },
+      {
+        name: 'channels',
+        description: 'Channels (text/voice).',
+        columns: [
+          { name: 'id', type: 'BIGINT UNSIGNED', constraints: 'PRIMARY KEY, AUTO_INCREMENT', description: 'PK' },
+          { name: 'category_id', type: 'BIGINT UNSIGNED', constraints: 'NOT NULL, FOREIGN KEY', ref: 'community_categories', description: 'FK' },
+          { name: 'name', type: 'VARCHAR(150)', constraints: 'NOT NULL', description: 'Channel name' },
+          { name: 'type', type: 'ENUM(\'text\',\'voice\')', constraints: 'NOT NULL DEFAULT \'text\'', description: 'Channel type' }
+        ]
+      },
+      {
+        name: 'messages',
+        description: 'Messages for DMs & channels.',
+        columns: [
+          { name: 'id', type: 'BIGINT UNSIGNED', constraints: 'PRIMARY KEY, AUTO_INCREMENT', description: 'PK' },
+          { name: 'sender_id', type: 'BIGINT UNSIGNED', constraints: 'NOT NULL, FOREIGN KEY', ref: 'users', description: 'Sender' },
+          { name: 'channel_id', type: 'BIGINT UNSIGNED', constraints: 'FOREIGN KEY, NULL', ref: 'channels', description: 'Channel (NULL for DMs)' },
+          { name: 'receiver_id', type: 'BIGINT UNSIGNED', constraints: 'FOREIGN KEY, NULL', ref: 'users', description: 'Receiver (for DMs)' },
+          { name: 'content_type', type: 'ENUM(\'text\',\'image\',\'file\')', constraints: 'NOT NULL DEFAULT \'text\'', description: 'Message content type' },
+          { name: 'content', type: 'TEXT', constraints: 'NULL', description: 'Message text' },
+          { name: 'file_url', type: 'VARCHAR(2048)', constraints: 'NULL', description: 'Attachment URL' },
+          { name: 'created_at', type: 'TIMESTAMP', constraints: 'DEFAULT CURRENT_TIMESTAMP', description: 'Created timestamp' }
+        ]
+      },
+      {
+        name: 'calls',
+        description: 'Call metadata for voice/video sessions.',
+        columns: [
+          { name: 'id', type: 'BIGINT UNSIGNED', constraints: 'PRIMARY KEY, AUTO_INCREMENT', description: 'PK' },
+          { name: 'call_uuid', type: 'CHAR(36)', constraints: 'NOT NULL, UNIQUE', description: 'Unique call id for media server' },
+          { name: 'channel_id', type: 'BIGINT UNSIGNED', constraints: 'FOREIGN KEY, NULL', ref: 'channels', description: 'Channel if call is channel-based' },
+          { name: 'initiator_id', type: 'BIGINT UNSIGNED', constraints: 'NOT NULL, FOREIGN KEY', ref: 'users', description: 'Who started call' },
+          { name: 'start_time', type: 'TIMESTAMP', constraints: 'NULL', description: 'Start time' },
+          { name: 'end_time', type: 'TIMESTAMP', constraints: 'NULL', description: 'End time' }
+        ]
+      }
+    ],
+
+    blog: [
+      {
+        name: 'blog_posts',
+        description: 'User-authored articles.',
+        columns: [
+          { name: 'id', type: 'BIGINT UNSIGNED', constraints: 'PRIMARY KEY, AUTO_INCREMENT', description: 'PK' },
+          { name: 'author_id', type: 'BIGINT UNSIGNED', constraints: 'NOT NULL, FOREIGN KEY', ref: 'users', description: 'Author' },
+          { name: 'title', type: 'VARCHAR(255)', constraints: 'NOT NULL', description: 'Title' },
+          { name: 'content', type: 'LONGTEXT', constraints: 'NOT NULL', description: 'Body' },
+          { name: 'status', type: 'ENUM(\'draft\',\'published\')', constraints: 'NOT NULL DEFAULT \'draft\'', description: 'Status' }
+        ]
+      },
+      {
+        name: 'blog_comments',
+        description: 'Comments on posts.',
+        columns: [
+          { name: 'id', type: 'BIGINT UNSIGNED', constraints: 'PRIMARY KEY, AUTO_INCREMENT', description: 'PK' },
+          { name: 'post_id', type: 'BIGINT UNSIGNED', constraints: 'NOT NULL, FOREIGN KEY', ref: 'blog_posts', description: 'FK' },
+          { name: 'user_id', type: 'BIGINT UNSIGNED', constraints: 'NOT NULL, FOREIGN KEY', ref: 'users', description: 'Author' },
+          { name: 'content', type: 'TEXT', constraints: 'NOT NULL', description: 'Comment' }
+        ]
+      }
+    ],
+
+    /* New tables for billing, sessions, attachments, moderation */
+    extra: [
+      {
+        name: 'plans',
+        description: 'Subscription product catalog.',
+        columns: [
+          { name: 'id', type: 'INT AUTO_INCREMENT', description: 'PK' },
+          { name: 'slug', type: 'VARCHAR(64)', description: 'Unique slug' },
+          { name: 'name', type: 'VARCHAR(128)', description: 'Display name' },
+          { name: 'period_months', type: 'TINYINT', description: 'Duration in months' },
+          { name: 'price_cents', type: 'BIGINT', description: 'Price (smallest currency unit)' }
+        ]
+      },
+      {
+        name: 'subscriptions',
+        description: 'Active user subscriptions.',
+        columns: [
+          { name: 'id', type: 'BIGINT AUTO_INCREMENT', description: 'PK' },
+          { name: 'user_id', type: 'BIGINT UNSIGNED', description: 'FK -> users' },
+          { name: 'plan_id', type: 'INT', description: 'FK -> plans' },
+          { name: 'started_at', type: 'TIMESTAMP', description: 'Start' },
+          { name: 'expires_at', type: 'TIMESTAMP', description: 'Expiry' },
+          { name: 'status', type: 'ENUM(\'active\',\'paused\',\'cancelled\',\'expired\')', description: 'Status' }
+        ]
+      },
+      {
+        name: 'subscription_usage',
+        description: 'Monthly usage counters for subscription limits.',
+        columns: [
+          { name: 'id', type: 'BIGINT AUTO_INCREMENT', description: 'PK' },
+          { name: 'subscription_id', type: 'BIGINT', description: 'FK -> subscriptions' },
+          { name: 'period_start', type: 'DATE', description: 'Window start' },
+          { name: 'call_minutes_used', type: 'INT', description: 'Minutes used' },
+          { name: 'connects_used', type: 'INT', description: 'Connection count' }
+        ]
+      },
+      {
+        name: 'sessions',
+        description: 'Scheduled lesson sessions between two users.',
+        columns: [
+          { name: 'id', type: 'BIGINT AUTO_INCREMENT', description: 'PK' },
+          { name: 'organizer_id', type: 'BIGINT UNSIGNED', description: 'Organizer' },
+          { name: 'participant_id', type: 'BIGINT UNSIGNED', description: 'Other user' },
+          { name: 'start_time', type: 'DATETIME', description: 'Start' },
+          { name: 'end_time', type: 'DATETIME', description: 'End' },
+          { name: 'status', type: 'ENUM(\'scheduled\',\'completed\',\'cancelled\')', description: 'State' }
+        ]
+      },
+      {
+        name: 'attachments',
+        description: 'File metadata (files stored in object storage).',
+        columns: [
+          { name: 'id', type: 'BIGINT AUTO_INCREMENT', description: 'PK' },
+          { name: 'message_id', type: 'BIGINT', description: 'FK -> messages' },
+          { name: 'uploaded_by', type: 'BIGINT', description: 'uploader' },
+          { name: 'url', type: 'VARCHAR(2048)', description: 'Object storage URL' },
+          { name: 'size_bytes', type: 'BIGINT', description: 'file size' }
+        ]
+      },
+      {
+        name: 'call_participants',
+        description: 'Who joined which call and when.',
+        columns: [
+          { name: 'id', type: 'BIGINT AUTO_INCREMENT', description: 'PK' },
+          { name: 'call_id', type: 'BIGINT', description: 'FK -> calls' },
+          { name: 'user_id', type: 'BIGINT', description: 'FK -> users' },
+          { name: 'joined_at', type: 'TIMESTAMP', description: 'Join timestamp' },
+          { name: 'left_at', type: 'TIMESTAMP', description: 'Leave timestamp' }
+        ]
+      },
+      {
+        name: 'blocks',
+        description: 'User blocks to prevent contact.',
+        columns: [
+          { name: 'id', type: 'BIGINT AUTO_INCREMENT', description: 'PK' },
+          { name: 'blocker_id', type: 'BIGINT', description: 'Blocker' },
+          { name: 'blocked_id', type: 'BIGINT', description: 'Blocked user' },
+          { name: 'created_at', type: 'TIMESTAMP', description: 'When blocked' }
+        ]
+      },
+      {
+        name: 'reports',
+        description: 'User reports for moderation.',
+        columns: [
+          { name: 'id', type: 'BIGINT AUTO_INCREMENT', description: 'PK' },
+          { name: 'reporter_id', type: 'BIGINT', description: 'Who reported' },
+          { name: 'reported_user_id', type: 'BIGINT', description: 'Reported user' },
+          { name: 'target_type', type: 'ENUM(\"message\",\"profile\",\"connection\",\"call\")', description: 'What is being reported' },
+          { name: 'target_id', type: 'BIGINT', description: 'ID of target' },
+          { name: 'reason', type: 'TEXT', description: 'Reason' }
+        ]
+      },
+      {
+        name: 'transactions',
+        description: 'Payment transactions & statuses.',
+        columns: [
+          { name: 'id', type: 'BIGINT AUTO_INCREMENT', description: 'PK' },
+          { name: 'user_id', type: 'BIGINT', description: 'Payer' },
+          { name: 'subscription_id', type: 'BIGINT', description: 'Related subscription' },
+          { name: 'amount_cents', type: 'BIGINT', description: 'Amount' },
+          { name: 'currency', type: 'CHAR(3)', description: 'Currency code' },
+          { name: 'status', type: 'ENUM(\"pending\",\"success\",\"failed\",\"refunded\")', description: 'Status' }
+        ]
+      }
+    ]
+  };
+
+  /* ======= Small UI render helpers ======= */
+  function escapeHtml(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+  function createTableHTML(table){
+    const columnsHTML = table.columns.map(col => {
+      const fkClass = col.ref ? 'fk-link' : '';
+      const fkData = col.ref ? `data-ref="${escapeHtml(col.ref)}"` : '';
+      return `<tr class="border-b border-gray-200/80">
+                <td class="p-3 font-mono text-sm ${fkClass}" ${fkData}>${escapeHtml(col.name)}</td>
+                <td class="p-3 font-mono text-sm text-gray-600">${escapeHtml(col.type || '')}</td>
+                <td class="p-3 text-sm text-gray-500">${escapeHtml(col.description || '')}${col.constraints? ' — '+escapeHtml(col.constraints): ''}</td>
+              </tr>`;
+    }).join('');
+
+    return `<div id="table-${escapeHtml(table.name)}" class="bg-white rounded-lg shadow-sm overflow-hidden">
+              <div class="p-4 border-b border-gray-200">
+                <h3 class="text-lg font-bold text-gray-800">${escapeHtml(table.name)}</h3>
+                <p class="text-sm muted mt-1">${escapeHtml(table.description || '')}</p>
+              </div>
+              <div class="overflow-x-auto">
+                <table class="w-full">
+                  <thead>
+                    <tr class="bg-gray-50 text-left text-xs text-gray-500 uppercase tracking-wider">
+                      <th class="p-3 font-medium">Column Name</th>
+                      <th class="p-3 font-medium">Data Type</th>
+                      <th class="p-3 font-medium">Description</th>
+                    </tr>
+                  </thead>
+                  <tbody class="bg-white divide-y divide-gray-200/80">
+                    ${columnsHTML}
+                  </tbody>
+                </table>
+              </div>
+            </div>`;
+  }
+
+  function createInfoCardHTML(item){
+    return `<div class="bg-white rounded-lg shadow-sm p-6">
+              <h3 class="text-lg font-bold text-gray-800 mb-2">${escapeHtml(item.name)}</h3>
+              <p class="muted">${escapeHtml(item.description)}</p>
+            </div>`;
+  }
+
+  /* ======= Render schema sections ======= */
+  document.getElementById('schema-user-container').innerHTML =
+    schemaData.user.map(createTableHTML).join('') +
+    schemaData.extra.filter(t => ['plans','subscriptions','subscription_usage'].includes(t.name)).map(createTableHTML).join('');
+
+  document.getElementById('schema-community-container').innerHTML =
+    schemaData.community.map(createTableHTML).join('') +
+    schemaData.extra.filter(t => ['sessions','calls','call_participants','attachments'].includes(t.name)).map(createTableHTML).join('');
+
+  document.getElementById('schema-blog-container').innerHTML =
+    schemaData.blog.map(createTableHTML).join('');
+
+  /* Principles & advanced */
+  const principlesData = [
+    { name: 'Normalization', description: 'Aim for 3NF to reduce redundancy while keeping denormalized read tables where performance demands.' },
+    { name: 'Data Types', description: 'Choose smallest appropriate types (BIGINT for global IDs, INT for small lists, VARCHAR with length limits).' },
+    { name: 'Indexing', description: 'Index FKs and high-cardinality filter columns. Use compound indexes for common queries.' },
+    { name: 'Relationships', description: 'Enforce FKs where possible; use application-layer checks for unordered pairs (connections).' }
+  ];
+  document.getElementById('principles-container').innerHTML = principlesData.map(createInfoCardHTML).join('');
+  const advancedData = [
+    { name: 'Partitioning', description: 'Partition messages by created_at (month) and archive older partitions to object storage.' },
+    { name: 'Caching', description: 'Use Redis for session caching and hot profile/skill lists.' },
+    { name: 'Media & Calls', description: 'Use managed providers for low-lift scale; store heavy media in S3/MinIO.' },
+    { name: 'Monitoring', description: 'Track slow queries, replication lag and subscription usage metrics.' }
+  ];
+  document.getElementById('advanced-container').innerHTML = advancedData.map(createInfoCardHTML).join('');
+
+  /* ======= Navigation behavior ======= */
+  const navLinks = document.querySelectorAll('.nav-link');
+  const contentSections = document.querySelectorAll('.content-section');
+  navLinks.forEach(link => {
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      const targetId = link.getAttribute('href').substring(1);
+
+      navLinks.forEach(l => l.classList.remove('active'));
+      link.classList.add('active');
+
+      contentSections.forEach(section => {
+        section.classList.remove('active');
+        if (section.id === targetId) section.classList.add('active');
+      });
+
+      // Scroll to top of main area for mobile
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  });
+
+  /* ======= FK clickable navigation (scroll + highlight) ======= */
+  document.body.addEventListener('click', e => {
+    const el = e.target;
+    if (el.classList.contains('fk-link')) {
+      const tableName = el.dataset.ref;
+      if (!tableName) return;
+      const target = document.getElementById(`table-${tableName}`);
+      if (!target) return;
+      // Ensure correct section is visible
+      const section = target.closest('.content-section');
+      if (section && !section.classList.contains('active')) {
+        // activate corresponding nav
+        const anchor = document.querySelector(`.nav-link[href="#${section.id}"]`);
+        if (anchor) anchor.click();
+      }
+      setTimeout(() => {
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        target.classList.add('table-highlight');
+        setTimeout(() => target.classList.remove('table-highlight'), 2000);
+      }, 120);
+    }
+  });
+
+  /* ======= Chart setup (Chart.js) ======= */
+  const chartData = {
+    userRoles: { labels: ['User','Admin'], data: [5840,60] },
+    messageTypes: { labels: ['Text','Image','File'], data: [150230,25040,8300] },
+    connectionStatus: { labels: ['Accepted','Pending','Blocked'], data: [8200,1500,350] }
+  };
+  let currentChart;
+  const ctx = document.getElementById('dataChart').getContext('2d');
+  function createChart(chartType){
+    if (currentChart) currentChart.destroy();
+    const { labels, data } = chartData[chartType];
+    currentChart = new Chart(ctx, {
+      type: 'bar',
+      data: { labels, datasets: [{ label: 'Count', data, backgroundColor: 'rgba(165,106,67,0.6)', borderColor: 'rgba(165,106,67,1)', borderWidth: 1 }]},
+      options: { responsive:true, maintainAspectRatio:false, scales:{ y:{ beginAtZero:true }} , plugins:{ legend:{ display:false } } }
+    });
+  }
+  const chartControls = document.getElementById('chart-controls');
+  chartControls.addEventListener('click', e => {
+    if (e.target.tagName === 'BUTTON') {
+      const chartType = e.target.dataset.chart;
+      createChart(chartType);
+      chartControls.querySelectorAll('button').forEach(btn => { btn.classList.remove('bg-[#a56a43]','text-white'); btn.classList.add('bg-gray-200','text-gray-700'); });
+      e.target.classList.add('bg-[#a56a43]','text-white'); e.target.classList.remove('bg-gray-200','text-gray-700');
+    }
+  });
+  createChart('userRoles');
+
+  /* ======= Optional: populate DDL placeholder for Plans (small improvement) ======= */
+  const plansDDL = `CREATE TABLE plans (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  slug VARCHAR(64) NOT NULL UNIQUE,
+  name VARCHAR(128) NOT NULL,
+  period_months TINYINT NOT NULL,
+  price_cents BIGINT NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`;
+  document.getElementById('plans-ddl')?.innerText && (document.getElementById('plans-ddl').innerText = plansDDL);
+
+  /* Accessibility: allow ESC to scroll top */
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') window.scrollTo({ top: 0, behavior: 'smooth' }); });
+});
+</script>
+
+</body>
+</html>
