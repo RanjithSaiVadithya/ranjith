@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hostel Property DB Flow & Tables</title>
+  
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({ startOnLoad: true });
+  </script>
+  
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f7f7f7; }
+    h1 { text-align: center; color: #333; }
+    .mermaid { background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); margin-bottom: 30px; }
+    .tabs { display: flex; flex-wrap: wrap; margin-bottom: 20px; }
+    .tab { padding: 10px 20px; margin-right: 5px; cursor: pointer; background: #ddd; border-radius: 5px 5px 0 0; }
+    .tab.active { background: #4B79A1; color: white; }
+    .tab-content { display: none; background: #fff; padding: 20px; border-radius: 0 5px 5px 5px; box-shadow: 0 0 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
+    .tab-content.active { display: block; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+    th, td { padding: 8px 12px; border: 1px solid #ccc; text-align: left; }
+    th { background: #eee; }
+  </style>
+</head>
+<body>
+
+<h1>Hostel Property SQL Flowchart & Tables</h1>
+
+<!-- Flowchart -->
+<div class="mermaid">
+graph TD
+  %% Table Colors: Property - Blue, Room - Green, Bed - Yellow, Booking - Red, Users - Purple, Gallery - Orange, Features - Teal, Payment - Pink, Location - Gray
+
+  P[Properties]:::property
+  R[Rooms]:::room
+  B[Beds]:::bed
+  BK[Bookings]:::booking
+  U[Users]:::user
+  G[Gallery]:::gallery
+  F[Property Features]:::feature
+  PAY[Payments]:::payment
+  C[Cities]:::location
+  S[States]:::location
+  CO[Countries]:::location
+
+  %% Relationships
+  P --> R
+  R --> B
+  U --> BK
+  P --> BK
+  R --> BK
+  B --> BK
+  P --> G
+  P --> F
+  BK --> PAY
+  U --> PAY
+  P --> C
+  C --> S
+  S --> CO
+  U --> C
+  U --> S
+  U --> CO
+
+  %% Styles
+  classDef property fill:#4B79A1,stroke:#333,stroke-width:2px,color:#fff;
+  classDef room fill:#6BA368,stroke:#333,stroke-width:2px,color:#fff;
+  classDef bed fill:#F0C419,stroke:#333,stroke-width:2px,color:#333;
+  classDef booking fill:#E07B7B,stroke:#333,stroke-width:2px,color:#fff;
+  classDef user fill:#9B59B6,stroke:#333,stroke-width:2px,color:#fff;
+  classDef gallery fill:#E67E22,stroke:#333,stroke-width:2px,color:#fff;
+  classDef feature fill:#1ABC9C,stroke:#333,stroke-width:2px,color:#fff;
+  classDef payment fill:#FF69B4,stroke:#333,stroke-width:2px,color:#fff;
+  classDef location fill:#95A5A6,stroke:#333,stroke-width:2px,color:#fff;
+</div>
+
+<!-- Tabs -->
+<div class="tabs">
+  <div class="tab active" data-tab="properties">Properties</div>
+  <div class="tab" data-tab="rooms">Rooms</div>
+  <div class="tab" data-tab="beds">Beds</div>
+  <div class="tab" data-tab="bookings">Bookings</div>
+  <div class="tab" data-tab="payments">Payments</div>
+  <div class="tab" data-tab="users">Users</div>
+  <div class="tab" data-tab="gallery">Gallery</div>
+  <div class="tab" data-tab="features">Property Features</div>
+</div>
+
+<!-- Tab Contents -->
+<div id="properties" class="tab-content active">
+  <table>
+    <tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+    <tr><td>id</td><td>PK</td><td>Primary key</td></tr>
+    <tr><td>name</td><td>string</td><td>Property name</td></tr>
+    <tr><td>image</td><td>string</td><td>Main image URL</td></tr>
+    <tr><td>slug</td><td>string</td><td>URL-friendly identifier</td></tr>
+    <tr><td>description</td><td>text</td><td>Property description</td></tr>
+    <tr><td>property_type</td><td>enum</td><td>Type (Co-Living, Hostel, etc.)</td></tr>
+    <tr><td>gender_restriction</td><td>enum</td><td>Male/Female/Both</td></tr>
+    <tr><td>address, city, state, country, pincode</td><td>string</td><td>Location details</td></tr>
+    <tr><td>latitude, longitude</td><td>decimal</td><td>Coordinates</td></tr>
+    <tr><td>check_in_time, check_out_time</td><td>time</td><td>Default check-in/out time</td></tr>
+    <tr><td>location_advantages</td><td>text</td><td>Nearby facilities</td></tr>
+    <tr><td>rating</td><td>decimal</td><td>Average rating</td></tr>
+    <tr><td>reviews_count</td><td>integer</td><td>Number of reviews</td></tr>
+    <tr><td>created_at, updated_at</td><td>timestamps</td><td>Laravel timestamps</td></tr>
+  </table>
+</div>
+
+<div id="rooms" class="tab-content">
+  <table>
+    <tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+    <tr><td>id</td><td>PK</td><td>Primary key</td></tr>
+    <tr><td>property_id</td><td>FK</td><td>Linked property</td></tr>
+    <tr><td>room_number</td><td>string</td><td>Room identifier</td></tr>
+    <tr><td>room_type</td><td>enum</td><td>Single/Double/Triple/Dormitory</td></tr>
+    <tr><td>price</td><td>decimal</td><td>Price per room/bed</td></tr>
+    <tr><td>total_beds</td><td>integer</td><td>Total beds in room</td></tr>
+    <tr><td>available_beds</td><td>integer</td><td>Beds available for booking</td></tr>
+    <tr><td>is_active</td><td>boolean</td><td>Room active status</td></tr>
+    <tr><td>created_at, updated_at</td><td>timestamps</td><td>Laravel timestamps</td></tr>
+  </table>
+</div>
+
+<div id="beds" class="tab-content">
+  <table>
+    <tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+    <tr><td>id</td><td>PK</td><td>Primary key</td></tr>
+    <tr><td>room_id</td><td>FK</td><td>Linked room</td></tr>
+    <tr><td>bed_number</td><td>string</td><td>B1, B2, etc.</td></tr>
+    <tr><td>status</td><td>enum</td><td>available/booked/maintenance</td></tr>
+    <tr><td>created_at, updated_at</td><td>timestamps</td><td>Laravel timestamps</td></tr>
+  </table>
+</div>
+
+<div id="bookings" class="tab-content">
+  <table>
+    <tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+    <tr><td>id</td><td>PK</td><td>Primary key</td></tr>
+    <tr><td>user_id</td><td>FK</td><td>Booking user</td></tr>
+    <tr><td>property_id</td><td>FK</td><td>Booked property</td></tr>
+    <tr><td>room_id</td><td>FK</td><td>Booked room</td></tr>
+    <tr><td>bed_id</td><td>FK</td><td>Booked bed</td></tr>
+    <tr><td>check_in, check_out</td><td>date</td><td>Booking dates</td></tr>
+    <tr><td>status</td><td>enum</td><td>pending/confirmed/cancelled</td></tr>
+    <tr><td>total_price</td><td>decimal</td><td>Total booking amount</td></tr>
+    <tr><td>created_at, updated_at</td><td>timestamps</td><td>Laravel timestamps</td></tr>
+  </table>
+</div>
+
+<div id="payments" class="tab-content">
+  <table>
+    <tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+    <tr><td>id</td><td>PK</td><td>Primary key</td></tr>
+    <tr><td>booking_id</td><td>FK</td><td>Linked booking</td></tr>
+    <tr><td>user_id</td><td>FK</td><td>Payment by user</td></tr>
+    <tr><td>payment_method</td><td>enum</td><td>card, wallet, UPI, etc.</td></tr>
+    <tr><td>status</td><td>enum</td><td>pending, completed, failed, refunded</td></tr>
+    <tr><td>amount</td><td>decimal</td><td>Paid amount</td></tr>
+    <tr><td>transaction_id</td><td>string</td><td>Payment gateway transaction ID</td></tr>
+    <tr><td>created_at, updated_at</td><td>timestamps</td><td>Laravel timestamps</td></tr>
+  </table>
+</div>
+
+<div id="users" class="tab-content">
+  <table>
+    <tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+    <tr><td>id</td><td>PK</td><td>Primary key</td></tr>
+    <tr><td>username, name, f_name, l_name</td><td>string</td><td>User names</td></tr>
+    <tr><td>email, secondary_email</td><td>string</td><td>Primary and secondary emails</td></tr>
+    <tr><td>mobile, secondary_mobile</td><td>string</td><td>Mobile numbers</td></tr>
+    <tr><td>wallet</td><td>decimal</td><td>User wallet balance</td></tr>
+    <tr><td>address, city_id, state_id, country_id, postalcode, city</td><td>string / FK</td><td>Location</td></tr>
+    <tr><td>profile_pic, banner</td><td>string</td><td>User images</td></tr>
+    <tr><td>mobile_verified, email_verified</td><td>boolean</td><td>Verification status</td></tr>
+    <tr><td>password</td><td>string</td><td>User password hash</td></tr>
+    <tr><td>otp, subscribe, firebase_token, remember_token</td><td>string / boolean</td><td>Other meta info</td></tr>
+    <tr><td>created_at, updated_at, deleted_at</td><td>timestamps</td><td>Laravel timestamps / soft deletes</td></tr>
+  </table>
+</div>
+
+<div id="gallery" class="tab-content">
+  <table>
+    <tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+    <tr><td>id</td><td>PK</td><td>Primary key</td></tr>
+    <tr><td>property_id</td><td>FK</td><td>Linked property</td></tr>
+    <tr><td>image</td><td>string</td><td>Image URL or path</td></tr>
+    <tr><td>title</td><td>string</td><td>Optional image title</td></tr>
+    <tr><td>description</td><td>text</td><td>Optional description</td></tr>
+    <tr><td>alt_text</td><td>string</td><td>Accessibility text</td></tr>
+    <tr><td>created_at, updated_at</td><td>timestamps</td><td>Laravel timestamps</td></tr>
+  </table>
+</div>
+
+<div id="features" class="tab-content">
+  <table>
+    <tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+    <tr><td>id</td><td>PK</td><td>Primary key</td></tr>
+    <tr><td>property_id</td><td>FK</td><td>Linked property</td></tr>
+    <tr><td>feature_name</td><td>string</td><td>Name of feature (Co-Living, Luxury, Male, Female)</td></tr>
+    <tr><td>description</td><td>text</td><td>Optional details</td></tr>
+    <tr><td>created_at, updated_at</td><td>timestamps</td><td>Laravel timestamps</td></tr>
+  </table>
+</div>
+
+<script>
+  const tabs = document.querySelectorAll('.tab');
+  const contents = document.querySelectorAll('.tab-content');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      contents.forEach(c => c.classList.remove('active'));
+      document.getElementById(tab.dataset.tab).classList.add('active');
+    });
+  });
+</script>
+
+</body>
+</html>
